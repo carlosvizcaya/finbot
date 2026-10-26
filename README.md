@@ -4,6 +4,8 @@ Asistente de educación financiera para Chile, hecho con FastAPI. Calcula cuotas
 
 Información educativa, no asesoría financiera.
 
+**En línea:** https://finbot-333582254188.southamerica-west1.run.app (Cloud Run, región Santiago)
+
 ## Estructura
 
 ```
@@ -44,6 +46,20 @@ El `Dockerfile` usa `python:3.12-slim` y arranca uvicorn en `0.0.0.0`, en el pue
 docker build -t finbot:local .
 docker run --rm -e PORT=9090 -p 9090:9090 finbot:local
 curl -s localhost:9090/health
+```
+
+## Desplegar en Cloud Run
+
+Requisitos: `gcloud auth login`, un proyecto con facturación activa y permisos de editor.
+
+```bash
+PROJECT_ID=mi-proyecto bash deploy.sh
+```
+
+`deploy.sh` habilita las APIs, da a la cuenta de servicio de compilación el rol `run.builder`, guarda `OPENAI_API_KEY` en Secret Manager si existe (en el entorno o en `.env`) y despliega en `southamerica-west1` con 512Mi, 1 CPU, de 0 a 3 instancias, concurrencia 80 y timeout de 60 s. Si algo falla:
+
+```bash
+gcloud run services logs read finbot --region southamerica-west1
 ```
 
 ## API
