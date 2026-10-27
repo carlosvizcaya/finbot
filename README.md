@@ -62,6 +62,20 @@ PROJECT_ID=mi-proyecto bash deploy.sh
 gcloud run services logs read finbot --region southamerica-west1
 ```
 
+## Asistente de posventa con RAG (`POST /posventa`)
+
+Prototipo del caso del informe de factibilidad: responde preguntas de agentes de posventa usando solo las políticas de `app/politicas/` (ficticias, con versión, fecha y estado) y cita cada afirmación.
+
+- Ingesta: `scripts/indexar.py` divide cada política por sección y guarda los embeddings (`text-embedding-3-small`) en `app/indice.json`.
+- Consulta: embedding de la pregunta → 4 fragmentos vigentes más parecidos (las versiones reemplazadas nunca se recuperan) → el LLM redacta citando `[política/sección]`.
+- Verificador mínimo: si la respuesta no cita fragmentos recuperados o el modelo declara `SIN_RESPALDO`, se abstiene y recomienda escalar a un supervisor.
+- Evaluación: `scripts/evaluar_rag.py` mide recall@1, recall@4, citas correctas, abstención y tokens con las preguntas de `eval/preguntas_rag.json`.
+
+```bash
+curl -s -X POST $URL/posventa -H "Content-Type: application/json" \
+  -d '{"mensaje":"¿Hasta cuándo puede un cliente cambiar una polera por otra talla?"}'
+```
+
 ## API
 
 `POST /chat` recibe `{"mensaje": "..."}` (2 a 500 caracteres) y devuelve `{"respuesta": "...", "fuente": "reglas" | "glosario" | "llm" | "ayuda"}`. El campo `fuente` dice de dónde salió la respuesta.

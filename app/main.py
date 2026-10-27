@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, StringConstraints
 
-from app import bot
+from app import bot, rag
 
 app = FastAPI(title="Finbot", description="Asistente de educación financiera para Chile")
 
@@ -20,14 +20,32 @@ class Respuesta(BaseModel):
     fuente: Literal["reglas", "glosario", "llm", "ayuda"]
 
 
+class RespuestaPosventa(BaseModel):
+    respuesta: str
+    fuente: Literal["rag", "ayuda"]
+    citas: list[str]
+    recuperados: list[str]
+
+
 @app.get("/health")
 def health() -> dict:
-    return {"ok": True, "modelo": bot.modelo_llm(), "llm": bot.llm_disponible()}
+    return {"ok": True, "modelo": bot.modelo_llm(), "llm": bot.llm_disponible(), "rag_fragmentos": len(rag.indice())}
 
 
 @app.post("/chat", response_model=Respuesta)
 def chat(pregunta: Pregunta) -> dict:
     return bot.responder(pregunta.mensaje)
+
+
+@app.post("/posventa", response_model=RespuestaPosventa)
+def posventa(pregunta: Pregunta) -> dict:
+    """Prototipo del caso del informe: responde con las políticas vigentes de posventa y las cita."""
+    if not rag.disponible():
+        return {"respuesta": "El asistente de posventa no está disponible ahora.", "fuente": "ayuda", "citas": [], "recuperados": []}
+    try:
+        return rag.responder(pregunta.mensaje, bot.modelo_llm())
+    except Exception:
+        return {"respuesta": rag.SIN_RESPALDO, "fuente": "ayuda", "citas": [], "recuperados": []}
 
 
 PAGINA = """<!doctype html>
