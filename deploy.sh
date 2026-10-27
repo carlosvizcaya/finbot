@@ -51,6 +51,13 @@ if [[ -n "${OPENAI_API_KEY:-}" ]]; then
     --member="serviceAccount:${COMPUTE_SA}" \
     --role="roles/secretmanager.secretAccessor" >/dev/null
   SECRET_FLAGS=(--update-secrets="OPENAI_API_KEY=${SECRET}:latest")
+elif gcloud secrets versions describe latest --secret "$SECRET" >/dev/null 2>&1; then
+  # La clave ya está en Secret Manager (por ejemplo, creada desde la consola): solo se conecta.
+  echo "Usando la clave que ya está en Secret Manager ($SECRET)."
+  gcloud secrets add-iam-policy-binding "$SECRET" \
+    --member="serviceAccount:${COMPUTE_SA}" \
+    --role="roles/secretmanager.secretAccessor" >/dev/null
+  SECRET_FLAGS=(--update-secrets="OPENAI_API_KEY=${SECRET}:latest")
 else
   echo "Sin OPENAI_API_KEY: se despliega sin LLM (reglas y glosario)."
 fi

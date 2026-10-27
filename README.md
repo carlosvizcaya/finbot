@@ -56,7 +56,7 @@ Requisitos: `gcloud auth login`, un proyecto con facturación activa y permisos 
 PROJECT_ID=mi-proyecto bash deploy.sh
 ```
 
-`deploy.sh` habilita las APIs, da a la cuenta de servicio de compilación el rol `run.builder`, guarda `OPENAI_API_KEY` en Secret Manager si existe (en el entorno o en `.env`) y despliega en `southamerica-west1` con 512Mi, 1 CPU, de 0 a 3 instancias, concurrencia 80 y timeout de 60 s. Si algo falla:
+`deploy.sh` habilita las APIs, da a la cuenta de servicio de compilación el rol `run.builder`, guarda `OPENAI_API_KEY` en Secret Manager si existe (en el entorno o en `.env`) o conecta el secreto `openai-api-key` si ya está creado y despliega en `southamerica-west1` con 512Mi, 1 CPU, de 0 a 3 instancias, concurrencia 80 y timeout de 60 s. Si algo falla:
 
 ```bash
 gcloud run services logs read finbot --region southamerica-west1
